@@ -1,18 +1,23 @@
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, ttk
 
-from models.usuario import Usuario
-from conexao import conectar
 
 
 class TelaCadastro:
 
-    def __init__(self, janela):
+    def __init__(self, janela, tipo_inicial=None):
         self.janela = janela
+        self.tipo_inicial = tipo_inicial.strip().lower() if tipo_inicial else None
 
         self.tela = tk.Toplevel(janela)
         self.tela.title("Cadastro - Evolui")
-        self.tela.geometry("400x400")
+        self.tela.geometry("400x460")
+        self.tela.transient(janela)
+        self.tela.grab_set()
+        self.tela.focus_set()
+        self.tela.lift()
+        self.tela.attributes("-topmost", True)
+        self.tela.after(100, lambda: self.tela.attributes("-topmost", False))
 
         titulo = tk.Label(
             self.tela,
@@ -33,6 +38,11 @@ class TelaCadastro:
         self.senha = tk.Entry(self.tela, width=35, show="*")
         self.senha.pack(pady=5)
 
+        tk.Label(self.tela, text="Tipo de usuário:").pack()
+        self.tipo = tk.StringVar(value=self.tipo_inicial or "jovem")
+        estado_tipo = "disabled" if self.tipo_inicial in ("jovem", "empresa") else "readonly"
+        ttk.Combobox(self.tela, textvariable=self.tipo, values=("jovem", "empresa"), state=estado_tipo, width=32).pack(pady=5)
+
         botao = tk.Button(
             self.tela,
             text="Cadastrar",
@@ -45,50 +55,17 @@ class TelaCadastro:
         nome = self.nome.get()
         email = self.email.get()
         senha = self.senha.get()
+        tipo = self.tipo.get()
 
-        if nome == "" or email == "" or senha == "":
+        if nome == "" or email == "" or senha == "" or tipo == "":
             messagebox.showwarning(
                 "Atenção",
                 "Preencha todos os campos."
             )
             return
 
-        usuario = Usuario(nome, email, senha)
-        conexao = None
-        cursor = None
-
-        try:
-            conexao = conectar()
-            cursor = conexao.cursor()
-
-            sql = """
-                INSERT INTO usuarios (nome, email, senha)
-                VALUES (%s, %s, %s)
-            """
-
-            valores = (
-                usuario.nome,
-                usuario.email,
-                usuario.senha
-            )
-
-            cursor.execute(sql, valores)
-            conexao.commit()
-
-            messagebox.showinfo(
-                "Sucesso",
-                "Usuário cadastrado com sucesso!"
-            )
-
-            self.tela.destroy()
-
-        except Exception as erro:
-            messagebox.showerror(
-                "Erro",
-                f"Não foi possível cadastrar:\n{erro}"
-            )
-        finally:
-            if cursor is not None:
-                cursor.close()
-            if conexao is not None and conexao.is_connected():
-                conexao.close()
+        messagebox.showinfo(
+            "Sucesso",
+            "Cadastro demonstrativo realizado com sucesso!"
+        )
+        self.tela.destroy()
